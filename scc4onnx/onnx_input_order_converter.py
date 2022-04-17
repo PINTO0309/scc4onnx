@@ -117,6 +117,7 @@ def order_conversion(
     # input_op_names_and_order_dims check
     # input_op_names_and_order_dims = {"name": shape, ...}
     inverted_list = {}
+    new_input_shapes = {}
     for input_op_name, order_dim in input_op_names_and_order_dims.items():
         for graph_input in graph.inputs:
             if input_op_name == graph_input.name:
@@ -155,13 +156,16 @@ def order_conversion(
                 # [[0,0],[2,1],[3,2],[1,3]]
                 #
                 # inverted_list_tmp = [[0,0],[1,2],[2,3],[3,1]]
-                # inverted_list = {"input_op_name": inverted_list_tmp}
                 # Transpose perm
-                #   perm = sorted(inverted_list[input_op_name], key=lambda x: x[1])
+                #   perm = sorted(inverted_list_tmp, key=lambda x: x[1])
+                # inverted_list = {"input_op_name": perm}
                 inverted_list_tmp = []
+                new_input_shapes_tmp = []
                 for idx, dim in enumerate(order_dim):
                     inverted_list_tmp.append([idx, dim])
-                inverted_list[input_op_name] = inverted_list_tmp
+                    new_input_shapes_tmp.append(graph_input.shape[dim])
+                inverted_list[input_op_name] = [idx[0] for idx in sorted(inverted_list_tmp, key=lambda x: x[1])]
+                new_input_shapes[input_op_name] = new_input_shapes_tmp
 
     # channel_change_input check
     # channel_change_inputs = {"name": dim, ...}
@@ -179,14 +183,46 @@ def order_conversion(
                         )
                         sys.exit(1)
 
+    for graph_input in graph.inputs:
+        if graph_input.name in new_input_shapes:
+
+            # Rewriting of graph input OP variable
+            old_graph_input_shape = graph_input.shape
+            graph_input.shape = new_input_shapes[graph_input.name]
+
+            # Generate Transpose OP
+            transpose_out = gs.Variable(
+                f"transpose_out_{graph_input.name}",
+                dtype=graph_input.dtype,
+                shape=old_graph_input_shape
+            )
+            transpose = gs.Node(
+                op="Transpose",
+                attrs={"perm": inverted_list[graph_input.name]},
+                inputs=[graph_input],
+                outputs=[transpose_out]
+            )
+            graph.nodes.append(transpose)
+
+            # graph_input.outputs[0] = transpose.inputs[0]
+            next_op = [node for node in graph.nodes if node.inputs[0].name == graph_input.name][0]
+            next_op.inputs[0] = transpose.outputs[0]
 
 
-    # # Save
-    # if output_onnx_file_path:
-    #     onnx.save(order_converted_graph, output_onnx_file_path)
+    # OP generation for Color channel transposition
 
-    # # 6. Return
-    # return order_converted_graph
+
+
+    # Cleanup
+    graph.cleanup().toposort()
+    order_converted_graph = gs.export_onnx(graph)
+
+    # Save
+    if output_onnx_file_path:
+        onnx.save(order_converted_graph, output_onnx_file_path)
+
+    # Return
+    return order_converted_graph
 
 
 def main():
