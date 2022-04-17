@@ -116,6 +116,7 @@ def order_conversion(
 
     # input_op_names_and_order_dims check
     # input_op_names_and_order_dims = {"name": shape, ...}
+    inverted_list = {}
     for input_op_name, order_dim in input_op_names_and_order_dims.items():
         for graph_input in graph.inputs:
             if input_op_name == graph_input.name:
@@ -142,6 +143,25 @@ def order_conversion(
                             f'order_dim: {order_dim}'
                         )
                         sys.exit(1)
+                # Generating an inverted list
+                #  0 1 2 3      0 1 2 3
+                # [0,2,3,1] -> [0,3,1,2]
+                # [[0,0],[1,2],[2,3],[3,1]]
+                # [[0,0],[3,1],[1,2],[2,3]]
+                #
+                #  0 1 2 3      0 1 2 3
+                # [0,3,1,2] -> [0,2,3,1]
+                # [[0,0],[1,3],[2,1],[3,2]]
+                # [[0,0],[2,1],[3,2],[1,3]]
+                #
+                # inverted_list_tmp = [[0,0],[1,2],[2,3],[3,1]]
+                # inverted_list = {"input_op_name": inverted_list_tmp}
+                # Transpose perm
+                #   perm = sorted(inverted_list[input_op_name], key=lambda x: x[1])
+                inverted_list_tmp = []
+                for idx, dim in enumerate(order_dim):
+                    inverted_list_tmp.append([idx, dim])
+                inverted_list[input_op_name] = inverted_list_tmp
 
     # channel_change_input check
     # channel_change_inputs = {"name": dim, ...}
@@ -158,7 +178,6 @@ def order_conversion(
                             f'ndim: {input_dim} ({graph_input.shape[input_dim]})'
                         )
                         sys.exit(1)
-
 
 
 
