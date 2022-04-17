@@ -18,6 +18,8 @@ setup(
     version=version,
     description=\
         "Very simple NCHW and NHWC conversion tool for ONNX. "+
+        "Change to the specified input order for each and every input OP. "+
+        "Also, change the channel order of RGB and BGR. Simple Channel Converter for ONNX. "+
         "Simple Channel Conversion for ONNX.",
     long_description=long_description,
     long_description_content_type="text/markdown",
