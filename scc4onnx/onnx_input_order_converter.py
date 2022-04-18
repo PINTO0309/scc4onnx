@@ -60,35 +60,35 @@ def order_conversion(
         onnx_graph If specified, ignore input_onnx_file_path and process onnx_graph.
 
     input_op_names_and_order_dims: Optional[dict]
-        Specify the name of the input_op to be dimensionally changed and\n
-        the order of the dimensions after the change.\n
-        The name of the input_op to be dimensionally changed\n
-        can be specified multiple times.\n\n
-        e.g.\n
-        input_op_names_and_order_dims = {\n
-            "input_op_name1": [0,3,1,2],\n
-            "input_op_name2": [0,2,3,1],\n
-            "input_op_name3": [0,3,1,2,4,5],\n
+        Specify the name of the input_op to be dimensionally changed and\n\
+        the order of the dimensions after the change.\n\
+        The name of the input_op to be dimensionally changed\n\
+        can be specified multiple times.\n\n\
+        e.g.\n\
+        input_op_names_and_order_dims = {\n\
+            "input_op_name1": [0,3,1,2],\n\
+            "input_op_name2": [0,2,3,1],\n\
+            "input_op_name3": [0,3,1,2,4,5],\n\
         }
 
     channel_change_inputs: Optional[dict]
-        Change the channel order of RGB and BGR.\n
-        If the original model is RGB, it is transposed to BGR.\n
-        If the original model is BGR, it is transposed to RGB.\n
-        It can be selectively specified from among the OP names\n
-        specified in input_op_names_and_order_dims.\n
-        OP names not specified in input_op_names_and_order_dims are ignored.\n
-        Multiple times can be specified as many times as the number\n
-        of OP names specified in input_op_names_and_order_dims.\n
-        channel_change_inputs = {"op_name": dimension_number_representing_the_channel}\n
-        dimension_number_representing_the_channel must specify\n
-        the dimension position after the change in input_op_names_and_order_dims.\n
-        For example, dimension_number_representing_the_channel is 1 for NCHW and 3 for NHWC.\n\n
-        e.g.\n
-        channel_change_inputs = {\n
-            "aaa": 1,\n
-            "bbb": 3,\n
-            "ccc": 2,\n
+        Change the channel order of RGB and BGR.\n\
+        If the original model is RGB, it is transposed to BGR.\n\
+        If the original model is BGR, it is transposed to RGB.\n\
+        It can be selectively specified from among the OP names\n\
+        specified in input_op_names_and_order_dims.\n\
+        OP names not specified in input_op_names_and_order_dims are ignored.\n\
+        Multiple times can be specified as many times as the number\n\
+        of OP names specified in input_op_names_and_order_dims.\n\
+        channel_change_inputs = {"op_name": dimension_number_representing_the_channel}\n\
+        dimension_number_representing_the_channel must specify\n\
+        the dimension position after the change in input_op_names_and_order_dims.\n\
+        For example, dimension_number_representing_the_channel is 1 for NCHW and 3 for NHWC.\n\n\
+        e.g.\n\
+        channel_change_inputs = {\n\
+            "aaa": 1,\n\
+            "bbb": 3,\n\
+            "ccc": 2,\n\
         }
 
     non_verbose: Optional[bool]
@@ -97,8 +97,8 @@ def order_conversion(
 
     Returns
     -------
-    channel_converted_graph: onnx.ModelProto
-        Channel converted onnx ModelProto
+    order_converted_graph: onnx.ModelProto
+        Order converted onnx ModelProto
     """
 
     # Unspecified check for input_onnx_file_path and onnx_graph
