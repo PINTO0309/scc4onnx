@@ -272,6 +272,7 @@ def order_conversion(
                             slice_list.append(slice)
                         slice_list_all.append(slice_list)
 
+                        # Generate Concat OP
                         concat_node_name = f"concat_out_{transpose_node.outputs[0].name}"
                         concat_out = gs.Variable(
                             concat_node_name,
@@ -335,6 +336,7 @@ def order_conversion(
                                 slice_list.append(slice)
                             slice_list_all.append(slice_list)
 
+                            # Generate Concat OP
                             concat_node_name = f"concat_out_{graph_node_input.name}"
                             concat_out = gs.Variable(
                                 concat_node_name,
