@@ -1,4 +1,4 @@
-# [WIP] scc4onnx
+# scc4onnx
 Very simple NCHW and NHWC conversion tool for ONNX. Change to the specified input order for each and every input OP. Also, change the channel order of RGB and BGR. **S**imple **C**hannel **C**onverter for **ONNX**.
 
 https://github.com/PINTO0309/simple-onnx-processing-tools
