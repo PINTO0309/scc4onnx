@@ -70,10 +70,11 @@ optional arguments:
       --input_op_names_and_order_dims ccc [0,3,1,2,4,5]
 
   --channel_change_inputs INPUT_OP_NAME DIM
-      Change the channel order of RGB and BGR. If the original model is RGB,
-      it is transposed to BGR.
-      If the original model is BGR, it is transposed to RGB. It can be selectively specified
-      from among the OP names specified in --input_op_names_and_order_dims.
+      Change the channel order of RGB and BGR.
+      If the original model is RGB, it is transposed to BGR.
+      If the original model is BGR, it is transposed to RGB.
+      It can be selectively specified from among the OP names specified
+      in --input_op_names_and_order_dims.
       OP names not specified in --input_op_names_and_order_dims are ignored.
       Multiple times can be specified as many times as the number of OP names specified
       in --input_op_names_and_order_dims.
