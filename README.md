@@ -182,7 +182,7 @@ from scc4onnx import order_conversion
 
 order_converted_graph = order_conversion(
     onnx_graph=graph,
-    input_op_names_and_order_dims={"left": [0,2,3,1], "right": [0,2,3,1]}, \
+    input_op_names_and_order_dims={"left": [0,2,3,1], "right": [0,2,3,1]},
     channel_change_inputs={"left": 1, "right": 1},
     non_verbose=True,
 )
