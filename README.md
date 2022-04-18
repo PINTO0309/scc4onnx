@@ -21,6 +21,7 @@ $ echo export PATH="~/.local/bin:$PATH" >> ~/.bashrc \
 
 ### run
 $ pip install -U onnx \
+&& python3 -m pip install -U onnx_graphsurgeon --index-url https://pypi.ngc.nvidia.com \
 && pip install -U scc4onnx
 ```
 ### 1-2. Docker
