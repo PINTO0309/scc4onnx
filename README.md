@@ -10,7 +10,7 @@ https://github.com/PINTO0309/simple-onnx-processing-tools
 - [x] Allow the user to specify the name of the input OP to change the input order.
 - [x] All number of dimensions can be freely changed, not only 4 dimensions such as NCHW and NHWC.
 - [x] Simply rewrite the input order of the input OP to the specified order and extrapolate Transpose after the input OP so that it does not affect the processing of subsequent OPs.
-- [ ] Allows the user to change the channel order of RGB and BGR by specifying options.
+- [x] Allows the user to change the channel order of RGB and BGR by specifying options.
 
 ## 6. Sample
 ### 6-1. Transpose only
