@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 import onnx
 import onnx_graphsurgeon as gs
 import numpy as np
-from typing import Optional
+from typing import Optional, List
 
 class Color:
     BLACK          = '\033[30m'
@@ -34,6 +34,101 @@ class Color:
     BG_DEFAULT     = '\033[49m'
     RESET          = '\033[0m'
 
+
+def gen_slice_op(
+    previous_node: gs.Node,
+    slice_dim: int,
+    op_name_suffix_number: int
+) -> gs.Node:
+    """
+    Parameters
+    ----------
+    previous_node: gs.Node
+        Source Node object.
+
+    slice_dim: int
+        Dimensions to Slice.
+
+    op_name_suffix_number: str
+        Sequential number to be assigned to the end of the \n\
+        generated Slice OP name.
+
+    Returns
+    -------
+    slice: gs.Node
+        Slice OP. onnx_graphsurgeon Node.
+    """
+
+    slice_output_shape = [dim if idx != slice_dim else 1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
+    slice_node_name = f"slice_out_{previous_node.outputs[0].name}_{op_name_suffix_number}"
+    slice_out = gs.Variable(
+        slice_node_name,
+        dtype=previous_node.outputs[0].dtype,
+        shape=slice_output_shape
+    )
+    starts_list = [0 if idx != slice_dim else op_name_suffix_number for idx in range(len(previous_node.outputs[0].shape))]
+    ends_list = [2147483647 if idx != slice_dim else op_name_suffix_number+1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
+    axes_list = [val for val in range(len(previous_node.outputs[0].shape))]
+    slice = gs.Node(
+        op="Slice",
+        name=f"{slice_node_name}_node",
+        inputs=[
+            previous_node.outputs[0],
+            gs.Constant(
+                f"starts_{slice_node_name}",
+                np.asarray(starts_list, dtype=np.int64)
+            ),
+            gs.Constant(
+                f"ends_{slice_node_name}",
+                np.asarray(ends_list, dtype=np.int64)
+            ),
+            gs.Constant(
+                f"axes_{slice_node_name}",
+                np.asarray(axes_list, dtype=np.int64)
+            ),
+        ],
+        outputs=[slice_out]
+    )
+    return slice
+
+
+def gen_concat_op(
+    input_variable: gs.Variable,
+    concat_axis: int,
+    concat_op_list: List[gs.Node]
+) -> gs.Node:
+    """
+    Parameters
+    ----------
+    input_variable: gs.Variable
+        Input variable.
+
+    concat_axis: int
+        Dimensions to Concat.
+
+    concat_op_list: List[gs.Node]
+        OP list of Concat targets.
+
+    Returns
+    -------
+    concat: gs.Node
+        Concat OP. onnx_graphsurgeon Node.
+    """
+
+    concat_node_name = f"concat_out_{input_variable.name}"
+    concat_out = gs.Variable(
+        concat_node_name,
+        dtype=input_variable.dtype,
+        shape=input_variable.shape
+    )
+    concat =  gs.Node(
+        op="Concat",
+        name=f"{concat_node_name}_node",
+        attrs={"axis": concat_axis},
+        inputs=[slice_tmp.outputs[0] for slice_tmp in concat_op_list],
+        outputs=[concat_out]
+    )
+    return concat
 
 def order_conversion(
     input_op_names_and_order_dims: Optional[dict] = None,
@@ -238,56 +333,21 @@ def order_conversion(
                     if transpose_node.inputs[0].name == input_op_name:
                         # Generate Slice OP
                         slice_list = []
-                        slice_output_shape = [dim if idx != input_dim else 1 for idx, dim in enumerate(transpose_node.outputs[0].shape)]
                         for i in range(3):
-                            slice_node_name = f"slice_out_{transpose_node.outputs[0].name}_{i}"
-                            slice_out = gs.Variable(
-                                slice_node_name,
-                                dtype=transpose_node.outputs[0].dtype,
-                                shape=slice_output_shape
-                            )
-                            starts_list = [0 if idx != input_dim else i for idx in range(len(transpose_node.outputs[0].shape))]
-                            ends_list = [2147483647 if idx != input_dim else i+1 for idx, dim in enumerate(transpose_node.outputs[0].shape)]
-                            axes_list = [val for val in range(len(transpose_node.outputs[0].shape))]
-                            slice = gs.Node(
-                                op="Slice",
-                                name=f"{slice_node_name}_node",
-                                inputs=[
-                                    transpose_node.outputs[0],
-                                    gs.Constant(
-                                        f"starts_{slice_node_name}",
-                                        np.asarray(starts_list, dtype=np.int64)
-                                    ),
-                                    gs.Constant(
-                                        f"ends_{slice_node_name}",
-                                        np.asarray(ends_list, dtype=np.int64)
-                                    ),
-                                    gs.Constant(
-                                        f"axes_{slice_node_name}",
-                                        np.asarray(axes_list, dtype=np.int64)
-                                    ),
-                                ],
-                                outputs=[slice_out]
+                            slice = gen_slice_op(
+                                transpose_node,
+                                input_dim,
+                                i
                             )
                             slice_list.append(slice)
                         slice_list_all.append(slice_list)
-
                         # Generate Concat OP
-                        concat_node_name = f"concat_out_{transpose_node.outputs[0].name}"
-                        concat_out = gs.Variable(
-                            concat_node_name,
-                            dtype=transpose_node.outputs[0].dtype,
-                            shape=transpose_node.outputs[0].shape
-                        )
                         slice_list.reverse()
-                        concat =  gs.Node(
-                            op="Concat",
-                            name=f"{concat_node_name}_node",
-                            attrs={"axis": input_dim},
-                            inputs=[slice_tmp.outputs[0] for slice_tmp in slice_list],
-                            outputs=[concat_out]
+                        concat = gen_concat_op(
+                            transpose_node.outputs[0],
+                            input_dim,
+                            slice_list
                         )
-
                         # Rewrite the input of the next OP to the output of Transpose
                         for idx, next_node_input in enumerate(next_node.inputs):
                             if next_node_input.name == transpose_node.outputs[0].name:
@@ -302,56 +362,21 @@ def order_conversion(
                         if graph_node_input.name == input_op_name:
                             # Generate Slice OP
                             slice_list = []
-                            slice_output_shape = [dim if idx != input_dim else 1 for idx, dim in enumerate(graph_node_input.shape)]
                             for i in range(3):
-                                slice_node_name = f"slice_out_{graph_node_input.name}_{i}"
-                                slice_out = gs.Variable(
-                                    slice_node_name,
-                                    dtype=graph_node_input.dtype,
-                                    shape=slice_output_shape
-                                )
-                                starts_list = [0 if idx != input_dim else i for idx in range(len(graph_node_input.shape))]
-                                ends_list = [2147483647 if idx != input_dim else i+1 for idx, dim in enumerate(graph_node_input.shape)]
-                                axes_list = [val for val in range(len(graph_node_input.shape))]
-                                slice = gs.Node(
-                                    op="Slice",
-                                    name=f"{slice_node_name}_node",
-                                    inputs=[
-                                        graph_node_input,
-                                        gs.Constant(
-                                            f"starts_{slice_node_name}",
-                                            np.asarray(starts_list, dtype=np.int64)
-                                        ),
-                                        gs.Constant(
-                                            f"ends_{slice_node_name}",
-                                            np.asarray(ends_list, dtype=np.int64)
-                                        ),
-                                        gs.Constant(
-                                            f"axes_{slice_node_name}",
-                                            np.asarray(axes_list, dtype=np.int64)
-                                        ),
-                                    ],
-                                    outputs=[slice_out]
+                                slice = gen_slice_op(
+                                    graph_node_input,
+                                    input_dim,
+                                    i
                                 )
                                 slice_list.append(slice)
                             slice_list_all.append(slice_list)
-
                             # Generate Concat OP
-                            concat_node_name = f"concat_out_{graph_node_input.name}"
-                            concat_out = gs.Variable(
-                                concat_node_name,
-                                dtype=graph_node_input.dtype,
-                                shape=graph_node_input.shape
-                            )
                             slice_list.reverse()
-                            concat =  gs.Node(
-                                op="Concat",
-                                name=f"{concat_node_name}_node",
-                                attrs={"axis": input_dim},
-                                inputs=[slice_tmp.outputs[0] for slice_tmp in slice_list],
-                                outputs=[concat_out]
+                            concat = gen_concat_op(
+                                graph_node_input,
+                                input_dim,
+                                slice_list
                             )
-
                             # Rewrite the input of the next OP to the output of Transpose
                             for idx, next_node_input in enumerate(graph_node.inputs):
                                 if next_node_input.name == graph_node_input.name:
