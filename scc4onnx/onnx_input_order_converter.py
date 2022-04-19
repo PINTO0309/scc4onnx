@@ -130,6 +130,7 @@ def gen_concat_op(
     )
     return concat
 
+
 def order_conversion(
     input_op_names_and_order_dims: Optional[dict] = None,
     channel_change_inputs: Optional[dict] = None,
