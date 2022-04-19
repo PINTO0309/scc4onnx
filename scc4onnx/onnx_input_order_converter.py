@@ -121,7 +121,7 @@ def gen_concat_op(
         dtype=input_variable.dtype,
         shape=input_variable.shape
     )
-    concat =  gs.Node(
+    concat = gs.Node(
         op="Concat",
         name=f"{concat_node_name}_node",
         attrs={"axis": concat_axis},
