@@ -292,7 +292,7 @@ def order_conversion(
     transpose_nodes = []
     next_nodes = []
     if input_op_names_and_order_dims:
-        for graph_input in graph.inputs:
+        for transpose_idx, graph_input in enumerate(graph.inputs):
             if graph_input.name in new_input_shapes:
 
                 # Rewriting of graph input OP variable
@@ -307,6 +307,7 @@ def order_conversion(
                 )
                 transpose = gs.Node(
                     op="Transpose",
+                    name=f"input_order_convert_transpose_{transpose_idx}",
                     attrs={"perm": inverted_list[graph_input.name]},
                     inputs=[graph_input],
                     outputs=[transpose_out]
