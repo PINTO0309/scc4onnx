@@ -2,6 +2,7 @@
 
 import os
 import sys
+import ast
 import traceback
 from argparse import ArgumentParser
 import onnx
@@ -507,7 +508,7 @@ def main():
     input_op_names_and_order_dims_tmp = None
     if input_op_names_and_order_dims:
         input_op_names_and_order_dims_tmp = {
-            input_op_names_and_order_dim[0]: eval(input_op_names_and_order_dim[1]) for input_op_names_and_order_dim in input_op_names_and_order_dims
+            input_op_names_and_order_dim[0]: ast.literal_eval(input_op_names_and_order_dim[1]) for input_op_names_and_order_dim in input_op_names_and_order_dims
         }
 
     # channel_change_inputs
