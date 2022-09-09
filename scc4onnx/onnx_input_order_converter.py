@@ -427,18 +427,21 @@ def order_conversion(
 def main():
     parser = ArgumentParser()
     parser.add_argument(
+        '-if',
         '--input_onnx_file_path',
         type=str,
         required=True,
         help='Input onnx file path.'
     )
     parser.add_argument(
+        '-of',
         '--output_onnx_file_path',
         type=str,
         required=True,
         help='Output onnx file path.'
     )
     parser.add_argument(
+        '-ioo',
         '--input_op_names_and_order_dims',
         nargs=2,
         action='append',
@@ -453,6 +456,7 @@ def main():
             '--input_op_names_and_order_dims ccc [0,3,1,2,4,5]'
     )
     parser.add_argument(
+        '-cci',
         '--channel_change_inputs',
         nargs=2,
         action='append',
@@ -475,6 +479,7 @@ def main():
             '--channel_change_inputs ccc 5'
     )
     parser.add_argument(
+        '-n',
         '--non_verbose',
         action='store_true',
         help='Do not show all information logs. Only error logs are displayed.'
