@@ -218,6 +218,15 @@ def order_conversion(
     # onnx_graph If specified, onnx_graph is processed first
     if not onnx_graph:
         onnx_graph = onnx.load(input_onnx_file_path)
+
+    # domain, ir_version
+    domain: str = onnx_graph.domain
+    ir_version: int = onnx_graph.ir_version
+    meta_data = {'domain': domain, 'ir_version': ir_version}
+    metadata_props = None
+    if hasattr(onnx_graph, 'metadata_props'):
+        metadata_props = onnx_graph.metadata_props
+
     graph = gs.import_onnx(onnx_graph)
 
     # input_op_names_and_order_dims check
@@ -396,7 +405,9 @@ def order_conversion(
 
     # Cleanup
     graph.cleanup().toposort()
-    order_converted_graph = gs.export_onnx(graph)
+    order_converted_graph = gs.export_onnx(graph, do_type_check=False, **meta_data)
+    if metadata_props is not None:
+        order_converted_graph.metadata_props.extend(metadata_props)
 
     # Optimize
     new_model = None
