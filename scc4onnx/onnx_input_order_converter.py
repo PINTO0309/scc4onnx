@@ -60,36 +60,68 @@ def gen_slice_op(
         Slice OP. onnx_graphsurgeon Node.
     """
 
-    slice_output_shape = [dim if idx != slice_dim else 1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
-    slice_node_name = f"slice_out_{previous_node.outputs[0].name}_{op_name_suffix_number}"
-    slice_out = gs.Variable(
-        slice_node_name,
-        dtype=previous_node.outputs[0].dtype,
-        shape=slice_output_shape
-    )
-    starts_list = [0 if idx != slice_dim else op_name_suffix_number for idx in range(len(previous_node.outputs[0].shape))]
-    ends_list = [2147483647 if idx != slice_dim else op_name_suffix_number+1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
-    axes_list = [val for val in range(len(previous_node.outputs[0].shape))]
-    slice = gs.Node(
-        op="Slice",
-        name=f"{slice_node_name}_node",
-        inputs=[
-            previous_node.outputs[0],
-            gs.Constant(
-                f"starts_{slice_node_name}",
-                np.asarray(starts_list, dtype=np.int64)
-            ),
-            gs.Constant(
-                f"ends_{slice_node_name}",
-                np.asarray(ends_list, dtype=np.int64)
-            ),
-            gs.Constant(
-                f"axes_{slice_node_name}",
-                np.asarray(axes_list, dtype=np.int64)
-            ),
-        ],
-        outputs=[slice_out]
-    )
+    if hasattr(previous_node.outputs[0], "shape"):
+        slice_output_shape = [dim if idx != slice_dim else 1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
+        slice_node_name = f"slice_out_{previous_node.outputs[0].name}_{op_name_suffix_number}"
+        slice_out = gs.Variable(
+            slice_node_name,
+            dtype=previous_node.outputs[0].dtype,
+            shape=slice_output_shape
+        )
+        starts_list = [0 if idx != slice_dim else op_name_suffix_number for idx in range(len(previous_node.outputs[0].shape))]
+        ends_list = [2147483647 if idx != slice_dim else op_name_suffix_number+1 for idx, dim in enumerate(previous_node.outputs[0].shape)]
+        axes_list = [val for val in range(len(previous_node.outputs[0].shape))]
+        slice = gs.Node(
+            op="Slice",
+            name=f"{slice_node_name}_node",
+            inputs=[
+                previous_node.outputs[0],
+                gs.Constant(
+                    f"starts_{slice_node_name}",
+                    np.asarray(starts_list, dtype=np.int64)
+                ),
+                gs.Constant(
+                    f"ends_{slice_node_name}",
+                    np.asarray(ends_list, dtype=np.int64)
+                ),
+                gs.Constant(
+                    f"axes_{slice_node_name}",
+                    np.asarray(axes_list, dtype=np.int64)
+                ),
+            ],
+            outputs=[slice_out]
+        )
+    else:
+        slice_output_shape = [dim if idx != slice_dim else 1 for idx, dim in enumerate(previous_node.shape)]
+        slice_node_name = f"slice_out_{previous_node.name}_{op_name_suffix_number}"
+        slice_out = gs.Variable(
+            slice_node_name,
+            dtype=previous_node.dtype,
+            shape=slice_output_shape
+        )
+        starts_list = [0 if idx != slice_dim else op_name_suffix_number for idx in range(len(previous_node.shape))]
+        ends_list = [2147483647 if idx != slice_dim else op_name_suffix_number+1 for idx, dim in enumerate(previous_node.shape)]
+        axes_list = [val for val in range(len(previous_node.shape))]
+        slice = gs.Node(
+            op="Slice",
+            name=f"{slice_node_name}_node",
+            inputs=[
+                previous_node,
+                gs.Constant(
+                    f"starts_{slice_node_name}",
+                    np.asarray(starts_list, dtype=np.int64)
+                ),
+                gs.Constant(
+                    f"ends_{slice_node_name}",
+                    np.asarray(ends_list, dtype=np.int64)
+                ),
+                gs.Constant(
+                    f"axes_{slice_node_name}",
+                    np.asarray(axes_list, dtype=np.int64)
+                ),
+            ],
+            outputs=[slice_out]
+        )
     return slice
 
 
